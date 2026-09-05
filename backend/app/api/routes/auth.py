@@ -12,12 +12,13 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def _set_auth_cookie(response: Response, token: str) -> None:
+    is_production = settings.ENVIRONMENT == "production"
     response.set_cookie(
         key=COOKIE_NAME,
         value=token,
         httponly=True,
-        samesite="lax",
-        secure=settings.ENVIRONMENT == "production",
+        samesite="none" if is_production else "lax",
+        secure=is_production,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         path="/",
     )
@@ -28,7 +29,9 @@ def register(data: UserRegister, response: Response, db: Session = Depends(get_d
     user = register_user(db, data)
     token = issue_token_for_user(user)
     _set_auth_cookie(response, token)
-    return user
+    user_read = UserRead.model_validate(user)
+    user_read.access_token = token
+    return user_read
 
 
 @router.post("/login", response_model=UserRead)
@@ -36,12 +39,20 @@ def login(data: UserLogin, response: Response, db: Session = Depends(get_db)):
     user = authenticate_user(db, data)
     token = issue_token_for_user(user)
     _set_auth_cookie(response, token)
-    return user
+    user_read = UserRead.model_validate(user)
+    user_read.access_token = token
+    return user_read
 
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie(key=COOKIE_NAME, path="/")
+    is_production = settings.ENVIRONMENT == "production"
+    response.delete_cookie(
+        key=COOKIE_NAME,
+        path="/",
+        samesite="none" if is_production else "lax",
+        secure=is_production,
+    )
     return {"success": True}
 
 

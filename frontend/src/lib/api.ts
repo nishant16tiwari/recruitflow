@@ -10,6 +10,15 @@ export const api = axios.create({
   withCredentials: true,
 })
 
+// Attach Bearer token from localStorage as fallback when cross-site cookies are blocked
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('recruitflow_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 export interface ApiErrorShape {
   detail?: string
 }

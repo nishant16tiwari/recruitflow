@@ -25,6 +25,9 @@ export function useLogin() {
   return useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
       const { data } = await api.post<User>('/auth/login', credentials)
+      if (data.access_token) {
+        localStorage.setItem('recruitflow_token', data.access_token)
+      }
       return data
     },
     onSuccess: (user) => {
@@ -37,7 +40,11 @@ export function useLogout() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      await api.post('/auth/logout')
+      try {
+        await api.post('/auth/logout')
+      } finally {
+        localStorage.removeItem('recruitflow_token')
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData(ME_KEY, null)

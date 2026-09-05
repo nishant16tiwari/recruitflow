@@ -9,6 +9,7 @@ export interface User {
   email: string
   name: string
   role: UserRole
+  access_token?: string
 }
 
 export type JobStatus = 'OPEN' | 'ARCHIVED'
