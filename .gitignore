@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.egg-info/
+
+# Environment secrets - never commit real values
+.env
+!.env.example
+
+# Node / frontend
+node_modules/
+dist/
+frontend/.vite/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Postgres data volume (if run outside Docker)
+pgdata/
+
+# Logs
+*.log
