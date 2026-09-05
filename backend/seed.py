@@ -105,10 +105,24 @@ def make_application(
     return app_
 
 
-def seed():
+def seed(force: bool = False):
     db = SessionLocal()
     try:
-        wipe_all(db)
+        user_count = 0
+        try:
+            user_count = db.query(User).count()
+        except Exception:
+            db.rollback()
+            user_count = 0
+
+        if user_count > 0 and not force:
+            print(f"Database already contains {user_count} users. Skipping seed.")
+            return
+
+        if force:
+            wipe_all(db)
+        else:
+            print("Database is empty. Populating initial seed data...")
 
         print("Creating users...")
         recruiter = make_user(db, "Nishant@recruitflow.dev", "Nishant Tiwari", UserRole.RECRUITER)
@@ -326,4 +340,6 @@ def seed():
 
 
 if __name__ == "__main__":
-    seed()
+    import sys
+    force_mode = "--force" in sys.argv
+    seed(force=force_mode)
