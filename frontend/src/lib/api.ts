@@ -20,12 +20,33 @@ api.interceptors.request.use((config) => {
 })
 
 export interface ApiErrorShape {
-  detail?: string
+  detail?: string | Array<{ loc?: string[]; msg?: string; type?: string }> | Record<string, unknown>
 }
 
 export function getErrorMessage(error: unknown): string {
-  if (axios.isAxiosError<ApiErrorShape>(error)) {
-    return error.response?.data?.detail ?? error.message
+  if (axios.isAxiosError(error)) {
+    const detail = error.response?.data?.detail
+    if (typeof detail === 'string') {
+      return detail
+    }
+    if (Array.isArray(detail) && detail.length > 0) {
+      return detail
+        .map((item) => {
+          if (typeof item === 'object' && item !== null && 'msg' in item) {
+            const loc = Array.isArray(item.loc)
+              ? item.loc.filter((part: string) => part !== 'body').join('.')
+              : ''
+            const msg = String(item.msg).replace(/^Value error, /i, '')
+            return loc ? `${loc}: ${msg}` : msg
+          }
+          return typeof item === 'string' ? item : JSON.stringify(item)
+        })
+        .join(', ')
+    }
+    if (detail && typeof detail === 'object') {
+      return JSON.stringify(detail)
+    }
+    return error.message || 'Something went wrong'
   }
-  return 'Something went wrong'
+  return error instanceof Error ? error.message : 'Something went wrong'
 }

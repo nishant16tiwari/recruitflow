@@ -10,15 +10,28 @@ export function ScheduleInterviewModal({ applicationId, onClose }: { application
   const schedule = useScheduleInterview(applicationId)
   const { showToast } = useToast()
 
-  const [date, setDate] = useState('')
-  const [startTime, setStartTime] = useState('')
-  const [endTime, setEndTime] = useState('')
+  const today = new Date().toISOString().split('T')[0]
+  const [date, setDate] = useState(today)
+  const [startTime, setStartTime] = useState('10:00')
+  const [endTime, setEndTime] = useState('11:00')
   const [interviewerId, setInterviewerId] = useState<number | ''>('')
   const [interviewType, setInterviewType] = useState('Video Call')
   const [meetingLink, setMeetingLink] = useState('')
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!date) {
+      showToast('Please select a date', 'error')
+      return
+    }
+    if (!startTime || !endTime) {
+      showToast('Please specify both start and end times', 'error')
+      return
+    }
+    if (endTime <= startTime) {
+      showToast('End time must be after start time', 'error')
+      return
+    }
     if (!interviewerId) {
       showToast('Select an interviewer', 'error')
       return
@@ -28,7 +41,7 @@ export function ScheduleInterviewModal({ applicationId, onClose }: { application
         date,
         start_time: startTime,
         end_time: endTime,
-        interviewer_ids: [interviewerId],
+        interviewer_ids: [Number(interviewerId)],
         interview_type: interviewType,
         meeting_link: meetingLink || undefined,
       },

@@ -16,9 +16,10 @@ const ToastContext = createContext<ToastContextValue | null>(null)
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
-  const showToast = useCallback((message: string, variant: 'success' | 'error' = 'success') => {
+  const showToast = useCallback((message: unknown, variant: 'success' | 'error' = 'success') => {
     const id = Date.now() + Math.random()
-    setToasts((prev) => [...prev, { id, message, variant }])
+    const strMessage = typeof message === 'string' ? message : JSON.stringify(message)
+    setToasts((prev) => [...prev, { id, message: strMessage, variant }])
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 4000)
@@ -43,7 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             ) : (
               <XCircle size={18} className="text-rose mt-0.5 shrink-0" />
             )}
-            <p className="text-sm text-ink flex-1">{t.message}</p>
+            <p className="text-sm text-ink flex-1">{String(t.message)}</p>
             <button
               onClick={() => dismiss(t.id)}
               aria-label="Dismiss notification"
