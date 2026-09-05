@@ -25,10 +25,26 @@ class Settings(BaseSettings):
     @classmethod
     def normalize_database_url(cls, v: str) -> str:
         if isinstance(v, str):
+            import re
+            import urllib.parse
+            v = v.strip()
+            # Extract standard postgres URL if accidental leading text exists (e.g. requirepostgresql://)
+            m = re.search(r'(postgres(?:ql)?(?:\+psycopg2)?://[^\s\"\']+)', v)
+            if m:
+                v = m.group(1)
+
             if v.startswith("postgres://"):
-                return v.replace("postgres://", "postgresql+psycopg2://", 1)
-            if v.startswith("postgresql://") and not v.startswith("postgresql+psycopg2://"):
-                return v.replace("postgresql://", "postgresql+psycopg2://", 1)
+                v = v.replace("postgres://", "postgresql+psycopg2://", 1)
+            elif v.startswith("postgresql://") and not v.startswith("postgresql+psycopg2://"):
+                v = v.replace("postgresql://", "postgresql+psycopg2://", 1)
+
+            # Strip channel_binding query parameter which causes psycopg2 libpq errors on Linux
+            parsed = urllib.parse.urlsplit(v)
+            if parsed.query:
+                qs = urllib.parse.parse_qsl(parsed.query)
+                qs_clean = [(k, val) for k, val in qs if k != "channel_binding"]
+                new_query = urllib.parse.urlencode(qs_clean)
+                v = urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, parsed.path, new_query, parsed.fragment))
         return v
 
     @property
