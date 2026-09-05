@@ -33,7 +33,13 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+        origins = []
+        for o in self.CORS_ORIGINS.split(","):
+            cleaned = o.strip()
+            if cleaned:
+                origins.append(cleaned.rstrip("/"))
+                origins.append(cleaned.rstrip("/") + "/")
+        return list(dict.fromkeys(origins))
 
 
 settings = Settings()

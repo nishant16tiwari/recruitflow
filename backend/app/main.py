@@ -26,6 +26,16 @@ app.include_router(alerts.router)
 app.include_router(users.router)
 
 
+@app.get("/")
+def root():
+    return {
+        "status": "online",
+        "message": "RecruitFlow API is running",
+        "docs": "/docs",
+        "health": "/health",
+    }
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
